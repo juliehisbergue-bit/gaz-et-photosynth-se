@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ExAO – Échanges gazeux de l’élodée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef2f5; --panel:#ffffff; --ink:#1d2b3a; --muted:#56657a; --line:#c9d3dd;
+  --water:#d7e8f6; --o2:#0e7c86; --co2:#9b4a1c; --lamp:#f2a516; --dark:#5c6675;
+  --accent:#1f5fbf; --bandDark:rgba(92,102,117,.14); --bandLight:rgba(242,165,22,.16);
+  --screen:#0f2a3d; --screenInk:#d9f2ff;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121a22; --panel:#1b2631; --ink:#e4ebf2; --muted:#9fb0c2; --line:#33424f;
+    --water:#1d3850; --o2:#3cc4cf; --co2:#e08a57; --lamp:#f5b83a; --dark:#8e99a8;
+    --accent:#6ea2f2; --bandDark:rgba(142,153,168,.14); --bandLight:rgba(245,184,58,.14);
+    --screen:#0a1d2b; --screenInk:#d9f2ff; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121a22; --panel:#1b2631; --ink:#e4ebf2; --muted:#9fb0c2; --line:#33424f;
+  --water:#1d3850; --o2:#3cc4cf; --co2:#e08a57; --lamp:#f5b83a; --dark:#8e99a8;
+  --accent:#6ea2f2; --bandDark:rgba(142,153,168,.14); --bandLight:rgba(245,184,58,.14);
+  --screen:#0a1d2b; --screenInk:#d9f2ff; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:17px;line-height:1.45}
+header{max-width:1200px;margin:0 auto;padding:20px 20px 6px}
+h1{font-size:1.55rem;margin:0 0 4px;font-weight:700}
+header p{margin:0;color:var(--muted);max-width:70ch}
+main{max-width:1200px;margin:0 auto;padding:14px 20px 32px;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:18px}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+h2{font-size:1.1rem;margin:0 0 10px}
+.choice{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.choice button,.btn{font:inherit;font-size:.98rem;border-radius:10px;border:1.5px solid var(--line);background:transparent;color:var(--ink);padding:9px 14px;cursor:pointer;min-height:44px}
+.choice button[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);font-weight:700}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+label.speed{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:.95rem}
+select{font:inherit;font-size:.95rem;padding:7px 8px;border-radius:8px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);min-height:40px}
+svg.montage{width:100%;height:auto;display:block}
+.phasebar{position:relative;display:grid;grid-template-columns:1fr 2fr 2fr;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:12px;font-size:.9rem;text-align:center}
+.phasebar div{padding:6px 2px}
+.phasebar .d{background:var(--bandDark)} .phasebar .l{background:var(--bandLight)}
+.phasebar div.on{font-weight:700;box-shadow:inset 0 -3px 0 var(--accent)}
+.cursor{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);left:0;pointer-events:none}
+.screen{background:var(--screen);color:var(--screenInk);border-radius:12px;padding:18px 16px;display:grid;grid-template-columns:1fr;gap:16px}
+.screen .cell small{display:block;opacity:.75;font-size:.82rem}
+.screen .val{font-size:2.6rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.screen .o2 .val{color:#5fe0ea}.screen .co2 .val{color:#ffb38a}
+.charts{display:grid;gap:10px;margin-top:12px}
+.chartbox{position:relative}
+.chartbox canvas{width:100%;height:190px;display:block;border:1px solid var(--line);border-radius:10px;background:var(--panel);touch-action:none}
+.chartbox .tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--panel);font-size:.82rem;padding:3px 7px;border-radius:6px;white-space:nowrap;display:none}
+.hint{color:var(--muted);font-size:.9rem;margin:6px 0 0}
+.tablewrap{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:.95rem;font-variant-numeric:tabular-nums}
+caption{caption-side:top;font-style:italic;text-decoration:underline;padding-bottom:8px;text-align:center}
+th,td{border:1px solid var(--line);padding:7px 8px;text-align:center}
+th{background:color-mix(in srgb,var(--line) 40%,transparent)}
+td.empty{color:var(--muted);font-style:italic}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.msg{min-height:1.4em;color:var(--accent);font-size:.95rem;margin-top:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Mesurer les échanges gazeux de l’élodée</h1>
+  <p>Choisis une enceinte, lance l’acquisition et observe les sondes. Relève les valeurs à 0, 5, 15 et 25 minutes pour compléter ton tableau.</p>
+</header>
+<main>
+  <section class="panel" aria-labelledby="t-montage">
+    <h2 id="t-montage">Le montage</h2>
+    <div class="choice" role="group" aria-label="Enceinte">
+      <button type="button" id="b-elodee" aria-pressed="true">Enceinte avec élodée</button>
+      <button type="button" id="b-temoin" aria-pressed="false">Enceinte témoin sans élodée</button>
+    </div>
+    <svg class="montage" viewBox="0 0 420 300" role="img" aria-label="Enceinte avec sondes et lampe">
+      <defs><radialGradient id="glow"><stop offset="0" stop-color="var(--lamp)" stop-opacity=".55"/><stop offset="1" stop-color="var(--lamp)" stop-opacity="0"/></radialGradient></defs>
+      <circle id="lampGlow" cx="62" cy="170" r="58" fill="url(#glow)"/>
+      <circle id="lampBulb" cx="62" cy="170" r="18" fill="var(--lamp)" stroke="var(--lamp)" stroke-width="2"/>
+      <text x="62" y="214" text-anchor="middle" font-size="13" fill="var(--muted)" id="lampTxt">lampe éteinte</text>
+      <path id="beam" d="M90 170H140" stroke="var(--lamp)" stroke-width="3" stroke-linecap="round"/>
+      <rect x="150" y="70" width="190" height="190" rx="12" fill="none" stroke="var(--dark)" stroke-width="2"/>
+      <rect x="155" y="100" width="180" height="155" rx="9" fill="var(--water)"/>
+      <rect x="140" y="60" width="210" height="12" rx="3" fill="var(--dark)"/>
+      <g id="plant" stroke="#2d9d3a" stroke-width="3.5" stroke-linecap="round" fill="none">
+        <path d="M245 252C236 225 254 195 245 150"/><path d="M245 232l-13-10M245 214l13-10M245 196l-13-10M245 178l13-10M245 162l-11-9"/>
+      </g>
+      <g id="bubbles" fill="none" stroke="var(--o2)" stroke-width="1.5"></g>
+      <rect x="192" y="20" width="16" height="200" rx="6" fill="var(--panel)" stroke="var(--o2)" stroke-width="2"/>
+      <rect x="282" y="20" width="16" height="200" rx="6" fill="var(--panel)" stroke="var(--co2)" stroke-width="2"/>
+      <text x="186" y="34" text-anchor="end" font-size="14" font-weight="700" fill="var(--o2)">sonde O₂</text>
+      <text x="304" y="34" font-size="14" font-weight="700" fill="var(--co2)">sonde CO₂</text>
+      <rect id="cache" x="134" y="52" width="222" height="216" rx="12" fill="var(--dark)" opacity="0"/>
+      <text id="cacheTxt" x="245" y="290" text-anchor="middle" font-size="13" fill="var(--muted)"></text>
+    </svg>
+    <div class="phasebar" aria-hidden="true">
+      <div class="d" id="p0">Obscurité<br>0–5 min</div>
+      <div class="l" id="p1">Lumière<br>5–15 min</div>
+      <div class="d" id="p2">Obscurité<br>15–25 min</div>
+      <span class="cursor" id="pcur"></span>
+    </div>
+    <div class="controls">
+      <button class="btn primary" type="button" id="start">Lancer l’acquisition</button>
+      <button class="btn" type="button" id="reset">Recommencer</button>
+      <label class="speed">Vitesse
+        <select id="speed"><option value="20">1 min = 2 s</option><option value="30" selected>1 min = 1 s</option><option value="60">1 min = 0,5 s</option></select>
+      </label>
+    </div>
+    <p class="hint">La lampe s’allume et le cache se retire automatiquement selon le protocole.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="t-mesures">
+    <h2 id="t-mesures">Les mesures des sondes</h2>
+    <div class="screen" aria-live="off">
+      <div class="cell"><small>Temps</small><span class="val" id="vT">0,0 min</span></div>
+      <div class="cell o2"><small>Dioxygène</small><span class="val" id="vO">– mg/L</span></div>
+      <div class="cell co2"><small>Dioxyde de carbone</small><span class="val" id="vC">– mg/L</span></div>
+    </div>
+    <p class="hint">Note les valeurs affichées à 0, 5, 15 et 25 minutes. Tu peux mettre en pause à tout moment.</p>
+    <div class="msg" id="msg" role="status"></div>
+  </section>
+</main>
+<script>
+(function(){
+const T_END=25, DT=0.1, N=Math.round(T_END/DT)+1;
+const fmt=(v,d=1)=>v.toFixed(d).replace('.',',');
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function phase(t){return t<5?0:(t<15?1:2);}
+function build(kind,seed){
+  const r=rng(seed), g=()=>{let u=0;for(let i=0;i<6;i++)u+=r();return (u-3)/1.0;};
+  const rates = kind==='elodee'
+    ? {o:[-0.04,0.16,-0.03], c:[0.08,-0.34,0.05]}
+    : {o:[0,0,0], c:[0,0,0]};
+  const o=[], c=[]; let O=8.0, C=20.0, ro=rates.o[0], rc=rates.c[0];
+  for(let i=0;i<N;i++){
+    const t=i*DT, p=phase(t);
+    ro+= (rates.o[p]-ro)*0.06; rc+=(rates.c[p]-rc)*0.06;   // transition progressive
+    if(i>0){O+=ro*DT; C+=rc*DT;}
+    o.push(O+g()*0.012); c.push(C+g()*0.02);
+  }
+  return {o,c};
+}
+const state={kind:'elodee',runs:{},t:0,running:false,last:0,notes:[]};
+function run(){ if(!state.runs[state.kind]) state.runs[state.kind]={data:build(state.kind,state.kind==='elodee'?11:23),t:0}; return state.runs[state.kind]; }
+const $=id=>document.getElementById(id);
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function setKind(k){
+  if(state.running) return;
+  state.kind=k;
+  $('b-elodee').setAttribute('aria-pressed',k==='elodee'); $('b-temoin').setAttribute('aria-pressed',k==='temoin');
+  $('plant').style.display=k==='elodee'?'':'none';
+  run(); render();
+}
+$('b-elodee').onclick=()=>setKind('elodee'); $('b-temoin').onclick=()=>setKind('temoin');
+
+function valueAt(R,t){const i=Math.min(Math.round(t/DT),N-1);return {o:R.data.o[i],c:R.data.c[i]};}
+
+let raf=null;
+function tick(now){
+  if(!state.running){raf=null;return;}
+  const R=run(), dt=(now-state.last)/1000; state.last=now;
+  const minPerSec=+$('speed').value/30;
+  R.t=Math.min(T_END,R.t+dt*minPerSec);
+  if(R.t>=T_END){state.running=false; $('msg').textContent='Acquisition terminée (25 min).';}
+  render(); raf=requestAnimationFrame(tick);
+}
+$('start').onclick=()=>{
+  const R=run();
+  if(state.running){state.running=false; render(); return;}
+  if(R.t>=T_END){$('msg').textContent='Acquisition terminée : clique sur « Recommencer » pour relancer.';return;}
+  state.running=true; state.last=performance.now(); $('msg').textContent='';
+  render(); if(!raf) raf=requestAnimationFrame(tick);
+};
+$('reset').onclick=()=>{state.running=false; delete state.runs[state.kind]; run(); $('msg').textContent=''; render();};
+function render(){
+  const R=run(), t=R.t, p=phase(Math.min(t,24.999)), started=t>0||state.running;
+  const light = started && p===1;
+  $('lampGlow').style.opacity=light?1:0;
+  $('lampBulb').style.opacity=light?1:.25;
+  $('beam').style.opacity=light?1:0;
+  $('lampTxt').textContent=light?'lampe allumée':'lampe éteinte';
+  $('cache').setAttribute('opacity',light?0:.55);
+  $('cacheTxt').textContent=light?'':'cache opaque en place';
+  $('bubbles').innerHTML = (light&&state.kind==='elodee') ? [0,1,2].map(i=>{const y=150-((t*40+i*30)%50);return '<circle cx="'+(247+(i%2?4:-3))+'" cy="'+y+'" r="3"/>';}).join('') : '';
+  ['p0','p1','p2'].forEach((id,i)=>$(id).classList.toggle('on',started&&p===i));
+  $('pcur').style.left='calc('+(t/T_END*100)+'% - 1px)';
+  const v=valueAt(R,t);
+  $('vT').textContent=fmt(t)+' min';
+  $('vO').textContent=started?fmt(v.o)+' mg/L':'– mg/L';
+  $('vC').textContent=started?fmt(v.c)+' mg/L':'– mg/L';
+  $('start').textContent=state.running?'Mettre en pause':(t>0&&t<T_END?'Reprendre':'Lancer l’acquisition');
+  $('b-elodee').disabled=$('b-temoin').disabled=state.running;
+}
+
+function unusedDraw(id,R,key,lo,hi,label,col){
+  const cv=$(id), dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+  if(cv.width!==W*dpr||cv.height!==H*dpr){cv.width=W*dpr;cv.height=H*dpr;}
+  const x=cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,W,H);
+  const L=56,Rm=12,Tp=14,B=34, w=W-L-Rm, h=H-Tp-B;
+  const X=t=>L+t/T_END*w, Y=v=>Tp+(1-(v-lo)/(hi-lo))*h;
+  x.fillStyle=cssv('--bandDark'); x.fillRect(X(0),Tp,X(5)-X(0),h); x.fillRect(X(15),Tp,X(25)-X(15),h);
+  x.fillStyle=cssv('--bandLight'); x.fillRect(X(5),Tp,X(15)-X(5),h);
+  x.strokeStyle=cssv('--line'); x.lineWidth=1; x.fillStyle=cssv('--muted'); x.font='12px "Atkinson Hyperlegible",system-ui,sans-serif';
+  x.textAlign='center';
+  for(let t=0;t<=25;t+=5){x.beginPath();x.moveTo(X(t),Tp);x.lineTo(X(t),Tp+h);x.stroke();x.fillText(t,X(t),Tp+h+15);}
+  x.fillText('Temps (min)',L+w/2,H-4);
+  x.textAlign='right';
+  const step=(hi-lo)<=3?0.5:1;
+  for(let v=lo;v<=hi+1e-9;v+=step){x.beginPath();x.moveTo(L,Y(v));x.lineTo(L+w,Y(v));x.stroke();x.fillText(fmt(v,step<1?1:0),L-6,Y(v)+4);}
+  x.save();x.translate(14,Tp+h/2);x.rotate(-Math.PI/2);x.textAlign='center';x.fillStyle=cssv('--ink');x.font='bold 12px "Atkinson Hyperlegible",system-ui,sans-serif';x.fillText(label,0,0);x.restore();
+  const n=Math.min(Math.round(R.t/DT),N-1);
+  if(R.t>0){x.strokeStyle=col;x.lineWidth=2.2;x.beginPath();for(let i=0;i<=n;i++){const px=X(i*DT),py=Y(R.data[key][i]);i?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();}
+  const hv=hover[id], tip=$(id==='cO'?'tO':'tC');
+  if(hv!=null && hv<=R.t && R.t>0){
+    const i=Math.round(hv/DT), px=X(i*DT), py=Y(R.data[key][i]);
+    x.strokeStyle=cssv('--ink');x.setLineDash([4,4]);x.beginPath();x.moveTo(px,Tp);x.lineTo(px,Tp+h);x.stroke();x.setLineDash([]);
+    x.fillStyle=col;x.beginPath();x.arc(px,py,4.5,0,7);x.fill();
+    tip.style.display='block'; tip.textContent=fmt(i*DT)+' min : '+fmt(R.data[key][i])+' mg/L';
+    tip.style.left=Math.min(px+8,W-tip.offsetWidth-4)+'px'; tip.style.top=Math.max(py-30,2)+'px';
+  } else tip.style.display='none';
+}
+setKind('elodee');
+})();
+</script>
+</body>
+</html>
